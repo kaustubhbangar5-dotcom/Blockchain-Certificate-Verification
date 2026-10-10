@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blockchain Certificate Verification System | Mumbai University</title>
+  <meta name="description" content="Decentralized Academic Certificate Registration and Verification System using Solidity Smart Contracts and Keccak-256 Cryptographic Hashing." />
+  
+  <!-- Google Fonts: Outfit, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Ethers.js for Web3 and Keccak-256 Hashing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <!-- QRCode.js for generating verification QR codes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Canvas Confetti for verified celebration effect -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- Project Stylesheet -->
+  <link rel="stylesheet" href="style.css?v=2" />
+</head>
+<body>
+  <!-- Ambient Glow Background Canvas Elements -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Header / Navigation Bar -->
+  <header class="navbar" id="top-navbar">
+    <div class="nav-container">
+      <div class="brand-logo">
+        <div class="logo-icon-wrapper">
+          <i class="fa-solid fa-cube logo-icon"></i>
+          <span class="pulse-ring"></span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">BlockCertify</span>
+          <span class="brand-subtitle">Mumbai University &bull; Sem 7 Project</span>
+        </div>
+      </div>
+
+      <nav class="nav-links" id="main-nav">
+        <a href="#overview" class="nav-link active" data-section="overview">
+          <i class="fa-solid fa-chart-pie"></i> Overview
+        </a>
+        <a href="#register" class="nav-link" data-section="register">
+          <i class="fa-solid fa-file-circle-plus"></i> Register
+        </a>
+        <a href="#verify" class="nav-link" data-section="verify">
+          <i class="fa-solid fa-shield-halved"></i> Verify
+        </a>
+        <a href="#ledger" class="nav-link" data-section="ledger">
+          <i class="fa-solid fa-cubes-stacked"></i> Blockchain Vault
+        </a>
+        <a href="#contract-info" class="nav-link" data-section="contract-info">
+          <i class="fa-solid fa-code"></i> Smart Contract
+        </a>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="status-pill" id="blockchain-status-pill" title="Current Blockchain Operating Mode">
+          <span class="status-dot online"></span>
+          <span id="blockchain-mode-text">Remix VM / Sim Mode</span>
+        </div>
+        <button class="btn btn-outline-sm" id="btn-toggle-settings" title="Web3 & Contract Settings">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="main-layout">
+    
+    <!-- Hero / Overview Section -->
+    <section id="overview" class="content-section active-section">
+      <div class="hero-banner">
+        <div class="hero-badge">
+          <i class="fa-solid fa-award"></i> Mumbai University &bull; Decentralized Verification System
+        </div>
+        <h1 class="hero-title">
+          Tamper-Proof Certificate Verification <br />
+          <span class="gradient-text">Powered by Ethereum Blockchain & Keccak-256</span>
+        </h1>
+        <p class="hero-desc">
+          Eliminate educational certificate fraud using immutable smart contracts. Register authentic academic credentials, generate cryptographic SHA3/Keccak-256 fingerprints, and instantly verify integrity directly on the blockchain.
+        </p>
+        <div class="hero-cta-group">
+          <button class="btn btn-primary" onclick="switchTab('register')">
+            <i class="fa-solid fa-plus-circle"></i> Register New Certificate
+          </button>
+          <button class="btn btn-secondary" onclick="switchTab('verify')">
+            <i class="fa-solid fa-magnifying-glass"></i> Verify Certificate ID
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Module 1 & 2: Admin Dashboard & Certificate Registration -->
+    <section id="register" class="content-section">
+      <div class="section-heading">
+        <div class="badge-pill"><i class="fa-solid fa-lock"></i> Module 1 & 2: Admin Portal</div>
+        <h2>Register New Certificate on Blockchain</h2>
+        <p>Enter the student and degree details. The system computes the cryptographic hash and commits the record to the smart contract.</p>
+      </div>
+
+      <div class="grid-2-col">
+        <!-- Form Column -->
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <i class="fa-solid fa-file-pen card-header-icon text-cyan"></i>
+              <div>
+                <h3 class="card-title">Certificate Details Form</h3>
+                <p class="card-subtitle">Fill in official university certificate data</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost-sm" id="btn-autofill-sample" title="Populate with sample student data">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-fill Sample
+            </button>
+          </div>
+
+          <div class="card-body">
+            <form id="form-register-certificate">
+              <div class="form-group">
+                <label for="reg-cert-id" class="form-label">
+                  Certificate Unique ID <span class="required">*</span>
+                </label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-hashtag input-icon"></i>
+                  <input type="text" id="reg-cert-id" class="form-control" placeholder="e.g. MU-2024-COMPS-1082" required />
+                </div>
+                <small class="form-hint">Unique alphanumeric ID issued by Mumbai University.</small>
+              </div>
+
+              <div class="form-group">
+                <label for="reg-student-name" class="form-label">
+                  Student Full Name <span class="required">*</span>
+                </label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-user-graduate input-icon"></i>
+                  <input type="text" id="reg-student-name" class="form-control" placeholder="e.g. Kaustubh Bangar" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="reg-course-name" class="form-label">
+                  Course / Degree Name <span class="required">*</span>
+                </label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-graduation-cap input-icon"></i>
+                  <input type="text" id="reg-course-name" class="form-control" placeholder="e.g. Bachelor of Engineering in Computer Science" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="reg-college-name" class="form-label">
+                  College / Institution Name <span class="required">*</span>
+                </label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-building-columns input-icon"></i>
+                  <input type="text" id="reg-college-name" class="form-control" placeholder="e.g. Mumbai University Department of Technology" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="reg-issue-date" class="form-label">
+                  Issue Date <span class="required">*</span>
+                </label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-calendar-days input-icon"></i>
+                  <input type="date" id="reg-issue-date" class="form-control" required />
+                </div>
+              </div>
+
+              <!-- Live Cryptographic Fingerprint Preview -->
+              <div class="hash-preview-box">
+                <div class="hash-preview-header">
+                  <span><i class="fa-solid fa-fingerprint"></i> Live Computed Keccak-256 Fingerprint:</span>
+                  <span class="hash-status-tag" id="reg-hash-status">Auto-computing</span>
+                </div>
+                <div class="hash-code-display" id="reg-live-hash">
+                  0x0000000000000000000000000000000000000000000000000000000000000000
+                </div>
+              </div>
+
+              <div class="form-actions mt-lg">
+                <button type="submit" class="btn btn-primary btn-block" id="btn-submit-register">
+                  <i class="fa-solid fa-cubes"></i> Register on Blockchain Smart Contract
+                </button>
+                <button type="reset" class="btn btn-outline btn-block" id="btn-reset-register">
+                  <i class="fa-solid fa-rotate-left"></i> Clear Form
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Live Registration Receipt & Certificate Preview Column -->
+        <div class="glass-card flex-column">
+          <div class="card-header">
+            <div class="card-title-group">
+              <i class="fa-solid fa-receipt card-header-icon text-green"></i>
+              <div>
+                <h3 class="card-title">Registration Status & Digital Preview</h3>
+                <p class="card-subtitle">Real-time blockchain transaction feedback</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body flex-grow" id="reg-receipt-container">
+            <div class="empty-state" id="reg-empty-state">
+              <i class="fa-solid fa-cube empty-state-icon pulse-slow"></i>
+              <h4>Ready for Registration</h4>
+              <p>Fill out the form and submit to generate the blockchain block and store the immutable certificate fingerprint.</p>
+              <div class="quick-preset-chips mt-md">
+                <span class="chip-label">Quick load test cases:</span>
+                <button class="preset-chip" onclick="loadSampleCase(1)">Sample 1: Kaustubh (Comps)</button>
+                <button class="preset-chip" onclick="loadSampleCase(2)">Sample 2: Priya (IT)</button>
+                <button class="preset-chip" onclick="loadSampleCase(3)">Sample 3: Rohan (AI & DS)</button>
+              </div>
+            </div>
+
+            <!-- Populated after successful registration -->
+            <div class="receipt-success-view d-none" id="reg-success-view">
+              <div class="alert-banner alert-success">
+                <i class="fa-solid fa-circle-check banner-icon"></i>
+                <div>
+                  <strong>Registration Successful!</strong>
+                  <p>Certificate record committed to the Smart Contract.</p>
+                </div>
+              </div>
+
+              <div class="receipt-details-list">
+                <div class="receipt-row">
+                  <span class="receipt-label">Certificate ID</span>
+                  <span class="receipt-val font-mono" id="receipt-cert-id">-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Student Name</span>
+                  <span class="receipt-val font-bold" id="receipt-student-name">-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Course & Degree</span>
+                  <span class="receipt-val" id="receipt-course">-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">College</span>
+                  <span class="receipt-val" id="receipt-college">-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Issue Date</span>
+                  <span class="receipt-val" id="receipt-date">-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Block Number</span>
+                  <span class="receipt-val font-mono text-cyan" id="receipt-block">-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Transaction Hash</span>
+                  <span class="receipt-val font-mono truncate-hash" id="receipt-tx-hash">-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-label">Keccak-256 Hash</span>
+                  <span class="receipt-val font-mono truncate-hash" id="receipt-keccak-hash">-</span>
+                </div>
+              </div>
+
+              <div class="receipt-actions mt-md">
+                <button class="btn btn-secondary btn-block" id="btn-view-certificate-modal">
+                  <i class="fa-solid fa-graduation-cap"></i> View & Print Official Certificate
+                </button>
+                <button class="btn btn-outline-sm btn-block" onclick="switchTab('verify')">
+                  <i class="fa-solid fa-shield-halved"></i> Go to Verification Page
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Module 3: Certificate Verification -->
+    <section id="verify" class="content-section">
+      <div class="section-heading">
+        <div class="badge-pill"><i class="fa-solid fa-shield-halved"></i> Module 3: Public Verification</div>
+        <h2>Verify Academic Certificate Authenticity</h2>
+        <p>Enter a Certificate ID to query the smart contract on the blockchain. Verifies authentic records instantly.</p>
+      </div>
+
+      <div class="glass-card max-w-900 mx-auto">
+        <div class="card-header">
+          <div class="card-title-group">
+            <i class="fa-solid fa-magnifying-glass card-header-icon text-cyan"></i>
+            <div>
+              <h3 class="card-title">Query Blockchain Certificate Vault</h3>
+              <p class="card-subtitle">Search by Certificate ID</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="search-bar-wrapper">
+            <div class="input-with-icon flex-grow">
+              <i class="fa-solid fa-hashtag input-icon"></i>
+              <input type="text" id="verify-search-input" class="form-control form-control-lg" placeholder="Enter Certificate ID (e.g. MU-2024-COMPS-1082)" />
+            </div>
+            <button class="btn btn-primary btn-lg" id="btn-execute-verify">
+              <i class="fa-solid fa-magnifying-glass"></i> Verify on Blockchain
+            </button>
+          </div>
+
+          <!-- Quick ID Pills from registered records -->
+          <div class="recent-ids-container mt-sm">
+            <span class="text-muted text-sm"><i class="fa-solid fa-clock-rotate-left"></i> Quick search registered IDs:</span>
+            <div class="id-chips-list" id="verify-quick-chips">
+              <!-- Dynamically populated -->
+              <span class="text-muted text-xs">No registered certificates yet</span>
+            </div>
+          </div>
+
+          <!-- Verification Results Container (Dynamic States) -->
+          <div class="verification-results-container mt-lg" id="verify-results-box">
+            <!-- Idle Placeholder -->
+            <div class="verify-idle-state" id="verify-idle-placeholder">
+              <i class="fa-solid fa-shield-cat placeholder-icon"></i>
+              <p>Enter an ID above and click <strong>Verify on Blockchain</strong> to check validity.</p>
+            </div>
+
+            <!-- State 1: Verified Successfully -->
+            <div class="result-card result-verified d-none" id="result-state-verified">
+              <div class="result-header">
+                <div class="result-status-badge verified">
+                  <i class="fa-solid fa-circle-check"></i> Certificate Verified & Authentic
+                </div>
+                <span class="timestamp-badge" id="verify-res-timestamp">Block Timestamp: -</span>
+              </div>
+
+              <div class="result-body-grid">
+                <div class="result-details">
+                  <div class="meta-row">
+                    <span class="meta-label"><i class="fa-solid fa-user"></i> Student Name</span>
+                    <span class="meta-val font-bold text-lg" id="verify-res-name">-</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label"><i class="fa-solid fa-hashtag"></i> Certificate ID</span>
+                    <span class="meta-val font-mono" id="verify-res-id">-</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label"><i class="fa-solid fa-graduation-cap"></i> Degree / Course</span>
+                    <span class="meta-val" id="verify-res-course">-</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label"><i class="fa-solid fa-building-columns"></i> College / Institute</span>
+                    <span class="meta-val" id="verify-res-college">-</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label"><i class="fa-solid fa-calendar"></i> Issue Date</span>
+                    <span class="meta-val" id="verify-res-date">-</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label"><i class="fa-solid fa-address-card"></i> Registered Issuer</span>
+                    <span class="meta-val font-mono text-xs truncate-hash" id="verify-res-issuer">-</span>
+                  </div>
+                  <div class="meta-row full-width">
+                    <span class="meta-label"><i class="fa-solid fa-fingerprint"></i> On-Chain Keccak-256 Hash</span>
+                    <span class="meta-val font-mono text-cyan hash-box" id="verify-res-hash">-</span>
+                  </div>
+                </div>
+
+                <div class="result-qr-pane">
+                  <div id="verify-qrcode-box" class="qr-canvas-wrapper"></div>
+                  <span class="text-xs text-muted mt-xs text-center">Scan to verify cryptographic proof</span>
+                  <button class="btn btn-outline-sm btn-block mt-sm" id="btn-open-cert-from-verify">
+                    <i class="fa-solid fa-print"></i> View Certificate
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- State 2: Certificate Not Found -->
+            <div class="result-card result-notfound d-none" id="result-state-notfound">
+              <div class="result-status-badge not-found">
+                <i class="fa-solid fa-circle-xmark"></i> Certificate Not Found
+              </div>
+              <div class="notfound-body">
+                <h3>No Record Exists on the Blockchain</h3>
+                <p>The Certificate ID <strong class="font-mono text-orange" id="notfound-query-id">""</strong> was not found in the Smart Contract storage.</p>
+                <div class="notfound-reasons">
+                  <ul>
+                    <li>The certificate may not have been registered by the institution.</li>
+                    <li>Double check for typing errors in the Certificate ID format.</li>
+                    <li>The certificate might be fraudulent or invalid.</li>
+                  </ul>
+                </div>
+                <button class="btn btn-outline-sm mt-md" onclick="switchTab('register')">
+                  <i class="fa-solid fa-plus-circle"></i> Register This Certificate as Admin
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Module 5: Blockchain Ledger Vault & Activity Explorer -->
+    <section id="ledger" class="content-section">
+      <div class="section-heading">
+        <div class="badge-pill"><i class="fa-solid fa-cubes-stacked"></i> Module 5: Ledger Explorer</div>
+        <h2>Blockchain Certificate Vault & Ledger</h2>
+        <p>Explore all registered certificate records and live smart contract blocks stored on the blockchain.</p>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <i class="fa-solid fa-table-list card-header-icon text-cyan"></i>
+            <div>
+              <h3 class="card-title">Registered Certificate Records</h3>
+              <p class="card-subtitle">Direct view of the smart contract's state</p>
+            </div>
+          </div>
+          <div class="header-tools">
+            <div class="search-mini">
+              <i class="fa-solid fa-search"></i>
+              <input type="text" id="vault-filter-input" placeholder="Filter by ID, name, or course..." />
+            </div>
+            <button class="btn btn-outline-sm" id="btn-export-json" title="Download all records as JSON file">
+              <i class="fa-solid fa-download"></i> Export JSON
+            </button>
+            <button class="btn btn-ghost-sm" id="btn-reset-demo-vault" title="Reset to Mumbai University initial demo dataset">
+              <i class="fa-solid fa-arrows-rotate"></i> Reset Demo Data
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body no-padding">
+          <div class="table-responsive">
+            <table class="vault-table" id="table-blockchain-vault">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Certificate ID</th>
+                  <th>Student Name</th>
+                  <th>Course & College</th>
+                  <th>Issue Date</th>
+                  <th>Keccak-256 Hash</th>
+                  <th>Block #</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="vault-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blockchain Activity / Transaction Stream -->
+      <div class="glass-card mt-lg">
+        <div class="card-header">
+          <div class="card-title-group">
+            <i class="fa-solid fa-tower-broadcast card-header-icon text-purple"></i>
+            <div>
+              <h3 class="card-title">Live Blockchain Transaction Activity Log</h3>
+              <p class="card-subtitle">Real-time smart contract events and gas execution logs</p>
+            </div>
+          </div>
+          <button class="btn btn-ghost-sm" id="btn-clear-tx-logs">Clear Logs</button>
+        </div>
+        <div class="card-body">
+          <div class="activity-terminal" id="activity-terminal-logs">
+            <!-- Log entries dynamically appended -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Smart Contract Info & Web3 Settings Section -->
+    <section id="contract-info" class="content-section">
+      <div class="section-heading">
+        <div class="badge-pill"><i class="fa-solid fa-code"></i> Developer & Smart Contract Architecture</div>
+        <h2>Blockchain Connection & Web3 Configuration</h2>
+        <p>Configure local Ethereum JSON-RPC connection settings or run with the built-in simulator.</p>
+      </div>
+
+      <div class="max-w-900 mx-auto">
+        <!-- Contract Configuration Card -->
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <i class="fa-solid fa-sliders card-header-icon text-cyan"></i>
+              <div>
+                <h3 class="card-title">Blockchain Connection Mode</h3>
+                <p class="card-subtitle">Toggle between In-Memory Simulator and Live Web3 RPC</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="mode-toggle-group">
+              <label class="mode-radio-card" id="mode-card-simulator">
+                <input type="radio" name="blockchainMode" value="simulator" id="radio-mode-sim" checked />
+                <div class="mode-content">
+                  <div class="mode-title-row">
+                    <i class="fa-solid fa-bolt text-cyan"></i>
+                    <strong>Built-in Remix VM / Local Simulator (Zero Setup)</strong>
+                  </div>
+                  <p class="mode-desc">Runs complete Keccak-256 cryptographic hashing and smart contract state simulation right in your browser. Perfect for instant evaluation & testing.</p>
+                </div>
+              </label>
+
+              <label class="mode-radio-card" id="mode-card-web3">
+                <input type="radio" name="blockchainMode" value="web3" id="radio-mode-web3" />
+                <div class="mode-content">
+                  <div class="mode-title-row">
+                    <i class="fa-brands fa-ethereum text-purple"></i>
+                    <strong>Live Web3 JSON-RPC / Hardhat / MetaMask (Option B)</strong>
+                  </div>
+                  <p class="mode-desc">Connect directly to a local Ethereum node (Hardhat / Ganache / Remix RPC at <code>http://127.0.0.1:8545</code>) via Ethers.js.</p>
+                </div>
+              </label>
+            </div>
+
+            <div id="web3-config-fields" class="web3-fields-wrapper mt-md d-none">
+              <div class="form-group">
+                <label for="web3-rpc-url" class="form-label">RPC Endpoint URL</label>
+                <input type="text" id="web3-rpc-url" class="form-control font-mono" value="http://127.0.0.1:8545" />
+              </div>
+              <div class="form-group">
+                <label for="web3-contract-addr" class="form-label">Deployed Contract Address</label>
+                <input type="text" id="web3-contract-addr" class="form-control font-mono" placeholder="0x5FbDB2315678afecb367f032d93F642f64180aa3" />
+              </div>
+              <button class="btn btn-secondary btn-block" id="btn-test-web3-conn">
+                <i class="fa-solid fa-plug"></i> Connect & Test Web3 RPC
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================== -->
+  <!-- MODAL: Official Certificate View & Print Layout -->
+  <!-- ============================================== -->
+  <div class="modal-overlay" id="modal-certificate-view">
+    <div class="modal-dialog modal-cert-dialog">
+      <div class="modal-header">
+        <h4 class="modal-title"><i class="fa-solid fa-award"></i> University Academic Certificate</h4>
+        <div class="modal-actions-top">
+          <button class="btn btn-primary-sm" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Print / Save PDF
+          </button>
+          <button class="btn btn-ghost-sm" id="btn-close-cert-modal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Printable Certificate Card -->
+        <div class="printable-certificate-frame" id="printable-certificate">
+          <div class="cert-outer-border">
+            <div class="cert-inner-border">
+              
+              <!-- Certificate Header -->
+              <div class="cert-head">
+                <div class="cert-mu-logo">
+                  <i class="fa-solid fa-building-columns"></i>
+                </div>
+                <h1 class="cert-uni-name">MUMBAI UNIVERSITY</h1>
+                <h3 class="cert-tagline">DECENTRALIZED ACADEMIC CREDENTIAL RECORD</h3>
+                <div class="cert-divider"></div>
+              </div>
+
+              <!-- Certificate Main Content -->
+              <div class="cert-main-text">
+                <p class="cert-proclamation">This is to certify that</p>
+                <h2 class="cert-candidate-name" id="modal-cert-student-name">KAUSTUBH BANGAR</h2>
+                <p class="cert-body-text">
+                  has successfully completed the prescribed curriculum and passed all examinations for the award of degree in
+                </p>
+                <h3 class="cert-degree-name" id="modal-cert-course-name">BACHELOR OF ENGINEERING (COMPUTER ENGINEERING)</h3>
+                <p class="cert-college-name-text">
+                  from <span id="modal-cert-college-name">Mumbai University Department of Technology</span>
+                </p>
+              </div>
+
+              <!-- Certificate Footer & Blockchain Seals -->
+              <div class="cert-foot">
+                <div class="cert-foot-col">
+                  <p class="cert-foot-label">Certificate ID:</p>
+                  <p class="cert-foot-val font-mono" id="modal-cert-id">MU-2024-COMPS-1082</p>
+                  <p class="cert-foot-label mt-xs">Date of Conerment:</p>
+                  <p class="cert-foot-val" id="modal-cert-date">15 June 2024</p>
+                </div>
+
+                <div class="cert-seal-col">
+                  <div class="blockchain-verified-seal">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>BLOCKCHAIN<br />VERIFIED</span>
+                  </div>
+                </div>
+
+                <div class="cert-qr-col">
+                  <div id="modal-qrcode-container" class="cert-qr-box"></div>
+                  <span class="cert-qr-sub">Scan to Verify Fingerprint</span>
+                </div>
+              </div>
+
+              <!-- Blockchain Cryptographic Watermark Footer -->
+              <div class="cert-blockchain-meta">
+                <div class="cert-hash-line">
+                  <strong>Keccak-256 Fingerprint:</strong> <span class="font-mono" id="modal-cert-hash">0x...</span>
+                </div>
+                <div class="cert-status-line">
+                  <i class="fa-solid fa-lock text-green"></i> Immutable Record on Ethereum Smart Contract &bull; Mumbai University Blockchain Vault
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-notifications"></div>
+
+  <!-- Project Logic Script -->
+  <script src="script.js?v=2"></script>
+</body>
+</html>
